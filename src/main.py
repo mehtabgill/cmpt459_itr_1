@@ -238,7 +238,7 @@ if __name__ == '__main__':
 
     plt.savefig('../plots/GBM_validation_curve.png')
 
-
+    run_random_forest()
 
 
 
