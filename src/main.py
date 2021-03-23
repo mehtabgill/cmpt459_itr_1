@@ -143,9 +143,9 @@ def detect_overfit():
 
 def run_random_forest():
     train_with_estimator(100)
-    train_with_estimator(200)
-    train_with_estimator(500)
-    train_with_estimator(1000)
+    # train_with_estimator(200)
+    # train_with_estimator(500)
+    # train_with_estimator(1000)
 
 
 if __name__ == '__main__':
