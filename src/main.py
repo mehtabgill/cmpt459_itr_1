@@ -27,7 +27,7 @@ def convert_string_numerical_categorical(dataframe, attributes):
 
 
 def train_with_estimator(n):
-    df = pd.read_csv('../data/joined_cases_train.csv')
+    df = pd.read_csv('https://raw.githubusercontent.com/mehtabgill/cmpt459_itr_1/main/data/joined_cases_train.csv')
     df = df.drop(["latitude", "longitude", "Combined_Key", "country"], axis=1)
     y = df.pop('outcome')
     x = df
@@ -107,7 +107,7 @@ def train_with_estimator(n):
 
 
 def detect_overfit():
-    df = pd.read_csv('../data/joined_cases_train.csv')
+    df = pd.read_csv('https://raw.githubusercontent.com/mehtabgill/cmpt459_itr_1/main/data/joined_cases_train.csv')
     df = df.drop(["latitude", "longitude", "Combined_Key", "country"], axis=1)
     y = df.pop('outcome')
     x = df
@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
     # GB MODEL :::
     # load data
-    df = pd.read_csv('../data/joined_cases_train.csv')
+    df = pd.read_csv('https://raw.githubusercontent.com/mehtabgill/cmpt459_itr_1/main/data/joined_cases_train.csv')
     # Convert string data to numeric data
     string_categorical_attributes = ['sex', 'Combined_Key', 'country', 'outcome']
     df = convert_string_numerical_categorical(dataframe=df, attributes=string_categorical_attributes)
