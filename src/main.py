@@ -13,8 +13,8 @@ from sklearn.svm import SVC
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder, label_binarize
+from sklearn.metrics import plot_confusion_matrix
 
-#
 
 
 def convert_string_numerical_categorical(dataframe, attributes):
@@ -149,96 +149,98 @@ def run_random_forest():
 
 
 if __name__ == '__main__':
+
+    # RANDOM FOREST :::: 
+    print('--- Starting  RANDOM FOREST CLASSIFIER --------')
+    run_random_forest()
+
+    # GB MODEL :::
     # load data
     df = pd.read_csv('../data/joined_cases_train.csv')
-    # df = df.head(5000)
     # Convert string data to numeric data
     string_categorical_attributes = ['sex', 'Combined_Key', 'country', 'outcome']
     df = convert_string_numerical_categorical(dataframe=df, attributes=string_categorical_attributes)
 
     outcomes = df['outcome']
-    # print(outcomes[847], outcomes[848], outcomes[849], outcomes[850])
-    print(outcomes)
     df = df.drop(columns=['outcome'])
-    # for col in df.columns:
-    #     print(df[col].isna().sum())
 
-    # 2.1 split
+    # 2.1 split 
     x_train, x_test, y_train, y_test = train_test_split(df, outcomes, train_size=0.80, test_size=0.20, random_state=42)
 
-    # print(x_train)
-    # print(y_train)
-    # 2.2
+    #2.2
     # LightGBM
-    print('--- Starting LightGB Model --------')
-
-    # Parameter Tuning
-    # params = {'learning_rate': [0.15, 0.1, 0.05, 0.01], 'n_estimators': np.arange(100, 600, 100).tolist() }
-    # GBM_tunning = GridSearchCV(estimator=GradientBoostingClassifier(max_depth= 7, random_state=42), param_grid=params, scoring='accuracy', n_jobs=4, cv=5)
-    # GBM_tunning.fit(x_train, y_train)
-    # # print(GBM_tunning.grid_scores_)
-    # print("------------- ")
-    # print(GBM_tunning.best_params_)
-    # print('------------------')
-    # print(GBM_tunning.best_score_)
+    print('--- Starting GB Classifier --------')
     start_time = time.time()
-    # GBM_clsf = GradientBoostingClassifier(learning_rate=0.9, max_depth=8, n_estimators=100, random_state=42)
-
-    # GBM_clsf.fit(x_train, y_train)
-    print("Process finished --- %s seconds ---" % (time.time() - start_time))
+    GBM_clsf = GradientBoostingClassifier(learning_rate=0.9, max_depth=8, n_estimators=10, random_state=42)
+    
+    GBM_clsf.fit(x_train, y_train)
     print('------- GB model ready! Now Saving... ------')
-    # pickle.dump(GBM_clsf, open('../models/GBM.pkl', 'wb'))
-
-    # 2.3
+    pickle.dump(GBM_clsf, open('../models/GBM.pkl', 'wb'))
+    
+    # 2.3 
     # Evaluation
-    # loaded_GBM = pickle.load(open('../models/GBM.pkl', 'rb'))
-    # print('------- GB Model loaded! -------------------')
+    loaded_GBM = pickle.load(open('../models/GBM.pkl', 'rb'))
+    print('------- GB Model loaded! -------------------')
+    
+    print('------ GB Model Classification report - VALIDATION Data -----------')
+    loaded_GBM_result_test = loaded_GBM.score(x_test, y_test)
+    print('------- GB Model VALIDATION data accuracy ----->  ', loaded_GBM_result_test)
+    print('------- GB Model VALIDATION data Confusion Matrix--------')
+    matrix = plot_confusion_matrix(loaded_GBM, x_test, y_test,
+                                 cmap=plt.cm.Blues,
+                                 normalize='true')
+    plt.title('Confusion matrix for our classifier')
+    plt.savefig('../plots/GBM_validation_c_matrix.png')
+    plt.show()
+    print('------- GB Model VALIDATION data Classification Report --------')
+    report_loaded_gbm_test = classification_report(y_test, loaded_GBM.predict(x_test), target_names=['deceased', 'hospitalized', 'nonhospitalized', 'recovered'])
+    print(report_loaded_gbm_test)
 
-    # print('------ GB Model Classification report - TEST Data -----------')
-    # loaded_GBM_result_test = loaded_GBM.score(x_test, y_test)
-    # loaded_GBM_predictions_test = loaded_GBM.predict(x_test)
-    # print('------- GB Model TEST data accuracy ----->  ', loaded_GBM_result_test)
-    # report_loaded_gbm_test = classification_report(y_test, loaded_GBM_predictions_test, target_names=['deceased', 'hospitalized', 'nonhospitalized', 'recovered'])
-    # print(report_loaded_gbm_test)
 
-    # print('------ GB Model Classification report - TRAIN Data -----------')
-    # loaded_GBM_result_train = loaded_GBM.score(x_train, y_train)
-    # loaded_GBM_predictions_train = loaded_GBM.predict(x_train)
-    # print('------- GB Model TRAIN data accuracy ----->  ', loaded_GBM_result_train)
-    # report_loaded_gbm_train = classification_report(y_train, loaded_GBM_predictions_train, target_names=['deceased', 'hospitalized', 'nonhospitalized', 'recovered'])
-    # print(report_loaded_gbm_train)
+    print('------ GB Model Classification report - TRAIN Data -----------')
+    loaded_GBM_result_train = loaded_GBM.score(x_train, y_train)
+    print('------- GB Model TRAIN data accuracy ----->  ', loaded_GBM_result_train)
+    print('------- GB Model TRAIN data Confusion Matrix --------')
+    matrix = plot_confusion_matrix(loaded_GBM, x_train, y_train,
+                                 normalize='true')
+    plt.title('Confusion matrix for our classifier')
+    plt.savefig('../plots/GBM_train_c_matrix.png')
+    plt.show()
+    print('------- GB Model TRAIN data Classification Report --------')
+    report_loaded_gbm_train = classification_report(y_train, loaded_GBM.predict(x_train), target_names=['deceased', 'hospitalized', 'nonhospitalized', 'recovered'])
+    print(report_loaded_gbm_train)
+
+
+    # !!!! IMPORTANT !!!!! VALIDATION CURVE TAKES AROUND 3HRS TO BUILD, therefore the code for it commented out. Produced result is saved in ./plots/GBM_validation_curve.png
 
     # 2.4
     # plot validation curve for GB model
-    X, y = load_digits(return_X_y=True)
-    # df = df.sample(100)
-    print(df)
-    n_estimators_range = np.arange(100, 1000, 250)
-    train_scores, test_scores = validation_curve(GradientBoostingClassifier(), df, outcomes, param_name="n_estimators",
-                                                 param_range=n_estimators_range,
-                                                 scoring="accuracy", n_jobs=-1)
-    mean_train = np.mean(train_scores, axis=1)
-    std_train = np.std(train_scores, axis=1)
-    mean_test = np.mean(test_scores, axis=1)
-    std_test = np.std(test_scores, axis=1)
+    # n_estimators_range = list(range(100, 1000, 250))
 
-    plt.title("Validation Curve with GBM")
-    plt.xlabel(r"n_estimators")
-    plt.ylabel("Score")
-    plt.semilogx(n_estimators_range, mean_train, label="Training score")
-    plt.fill_between(n_estimators_range, mean_train - std_train,
-                     mean_train + std_train,
-                     color="yellow")
-    plt.semilogx(n_estimators_range, mean_test, label="Cross-validation score", )
-    plt.fill_between(n_estimators_range, mean_test - std_test,
-                     mean_test + std_test,
-                     color="red")
-    plt.legend(loc="best")
-    plt.show()
+    # # n_jobs = -1 means use all cores of the computer
+    # train_scores, test_scores = validation_curve(GradientBoostingClassifier(), df, outcomes, param_name="n_estimators", param_range=n_estimators_range,
+    # scoring="accuracy", n_jobs=-1)
+    # mean_train = np.mean(train_scores, axis=1)
+    # std_train = np.std(train_scores, axis=1)
+    # mean_test = np.mean(test_scores, axis=1)
+    # std_test = np.std(test_scores, axis=1)
 
-    plt.savefig('../plots/GBM_validation_curve.png')
+    # plt.title("Validation Curve with GBM")
+    # plt.xlabel("n_estimators")
+    # plt.ylabel("Score")
+    # plt.plot(n_estimators_range, mean_train, label="Training score")
+    # plt.fill_between(n_estimators_range, mean_train - std_train,
+    #                 mean_train + std_train,
+    #                 color="yellow")
+    # plt.plot(n_estimators_range, mean_test, label="Cross-validation score")
+    # plt.fill_between(n_estimators_range, mean_test - std_test,
+    #                 mean_test + std_test,
+    #                 color="red")
+    # plt.legend(loc="best")
+    # plt.savefig('../plots/GBM_validation_curve.png')
+    # plt.show()
 
-    run_random_forest()
+    
 
 
 
